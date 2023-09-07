@@ -205,7 +205,7 @@ class Mars(CO2,H2O,REE):
         self.Cp=1.0e3                 # J/kg/K heat capacity
         self.alpha=5.0e-5             # 1/K coefficient of thermal expansion
         self.gam=1.3e-4               # K/m adiabatic gradient from Elkins-Tanton
-        self.core=self.radius-1.995e6 # m Radius of the Martian core
+        self.core=1.8e6               # Radius of the Martian core ~1800km Irving et al 2023 # self.radius-1.995e6 # m Radius of the Martian core #
         self.Fs = 0.0                 # W/m^2 solar heat flux
         self.tfinal = tfinal          # Final value of time
         self.dS     = 300.0           # Entropy of melting J/kg/K
@@ -219,12 +219,18 @@ class Mars(CO2,H2O,REE):
         self.T_init=self.T_CMB-(self.radius-self.core)*self.gam+200.0
         #self.fit_coefficients=self.radius_temperature_analytical()
         #a-T polynomial fit coefficients for 1820<T<2070 deg C
-        self.aT_fit_hi=[ -1.46402889e+00,   2.96827884e+03,   1.79228532e+05]
+        # self.aT_fit_hi=[ -1.46402889e+00,   2.96827884e+03,   1.79228532e+05] # forET solidus
+        # self.aT_fit_hi=[ 5.32793176e-03, -8.57521927e+02,  2.23293172e+06] # for Duncan solidus
+        self.aT_fit_hi=[  1.74540136e+00, -8.08756790e+03,  9.33506009e+06] # for Duncan solidus and new core
         #[ -1.19014770e+00,   2.03249128e+03,   1.09391926e+06]
         #a-T polynomial fit coefficient for 1350 < T <=1820 deg G
-        self.aT_fit_lo= [ -1.52094133e-02,   6.59633338e+01,  \
-                          -9.63920910e+04,   4.93403358e+07]
-        #[ -1.52094133e-02,   6.82235562e+01,  -1.03039120e+05,  5.42788842e+07]
+        # self.aT_fit_lo= [ -1.52094133e-02,   6.59633338e+01,  \     
+                          # -9.63920910e+04,   4.93403358e+07]      # for ET solidus
+        # self.aT_fit_lo= [ -8.48527711e-03,  3.95228013e+01, \
+        #                  -6.22167091e+04,  3.47931221e+07 ]      # for Duncan solidus
+        self.aT_fit_lo= [ -4.98551119e-03,  2.15696248e+01, \
+                         -3.17239342e+04, 1.72448766e+07 ]      # for Duncan solidus and new core
+            #[ -1.52094133e-02,   6.82235562e+01,  -1.03039120e+05,  5.42788842e+07]
         self.dadT=0.0                 #da/dT in m/K
         
         #######Volatile masses in terms of oceans
@@ -342,7 +348,10 @@ class Mars(CO2,H2O,REE):
         self.CREERM = np.zeros((23,nsteps)) # REE concentration in the RM
         self.MREEMO = np.zeros((23,nsteps)) # REE masses in the MO
         self.CREEMO = np.zeros((23,nsteps)) # REE concentration in the MO
-        
+        self.CREE_RM80 = np.zeros(23)
+        self.CREE_MO80 = np.zeros(23)
+        self.CREE_RM90 = np.zeros(23)
+        self.CREE_MO90 = np.zeros(23)     
        
         ############################################################
         #Set the first value of temperature to initial temperature
@@ -417,29 +426,65 @@ class Mars(CO2,H2O,REE):
         P=self.rho*self.g*z
         PGPa=P*1.0e-9
         return(PGPa)
-    def solidus(self, r1):
+    # def solidus(self, r1):
+    #     """Returns solidus temperature
+    #     enter radius of mantle in m
+    #     Equation 2 of Elkins-Tanton, 2008"""
+    #     Xliq=0.3
+    #     r=r1*1.0e-3
+    #     T = -1.963e-10*r**4+1.694e-6*r**3-0.00533*r*r+6.884*r\
+    #         -830.0-(6/(0.2*Xliq+0.025))
+    #     return(T)
+    # def liquidus(self,r):
+    #     """This function outlines
+    #     the liquidus of the Earth modified
+    #     for Mars. We assume that the liquidus
+    #     of Mars is depressed from that of the 
+    #     Earth by a uniform amount due to the 
+    #     presence of Fe in the innterior of
+    #     Mars. The uniform amount is the difference
+    #     between surface values of the HMH17 and
+    #     ET08 solidi"""
+    #     PGPa=self.depth2PGPa(r)
+    #     self.PGPa=PGPa
+    #     dT=1661.2-self.solidus(self.radius)
+    #     if type(r) is float:
+    #         if PGPa<20.0:
+    #             dum2 = 1982.1*(PGPa/6.594+1.0)**(1.0/5.374)-dT
+    #         else:
+    #             dum2=78.74*(PGPa/4.054e-3 + 1.0)**(1.0/2.44)-dT
+    #     else:
+    #         n=r.shape[0]        
+    #         dum2=np.zeros(n)
+    #         for ii in range(0,n):
+    #             if PGPa[ii]<20.0:
+    #                 dum2[ii] = 1982.1*(PGPa[ii]/6.594+1.0)**(1.0/5.374)-dT
+    #             else:
+    #                 dum2[ii]=78.74*(PGPa[ii]/4.054e-3 + 1.0)**(1.0/2.44)-dT
+    #     return(dum2)
+    def ET08solidus(self, r1):
         """Returns solidus temperature
         enter radius of mantle in m
         Equation 2 of Elkins-Tanton, 2008"""
-        Xliq=0.3
-        r=r1*1.0e-3
+        Xliq=0.3 #  remaining liquid volume fraction of the original magma ocean but why 0.3?
+        r=r1*1.0e-3 # why convert r input to km?? 
         T = -1.963e-10*r**4+1.694e-6*r**3-0.00533*r*r+6.884*r\
-            -830.0-(6/(0.2*Xliq+0.025))
+            -830.0-(6/(0.2*Xliq+0.025)) # why is the term 830.0 instead of 900.588 (A.1)?? What is the last term?? last term = 70.588 so adds up to the correct part but why do this? because this is exactly what Elkin Tanton has... 
         return(T)
-    def liquidus(self,r):
+    def ET08liquidus(self,r):
         """This function outlines
         the liquidus of the Earth modified
         for Mars. We assume that the liquidus
         of Mars is depressed from that of the 
         Earth by a uniform amount due to the 
-        presence of Fe in the innterior of
+        presence of Fe in the interior of
         Mars. The uniform amount is the difference
         between surface values of the HMH17 and
         ET08 solidi"""
-        PGPa=self.depth2PGPa(r)
+        PGPa=self.depth2PGPa(r) # convert depth in m to pressure in GPa
         self.PGPa=PGPa
-        dT=1661.2-self.solidus(self.radius)
-        if type(r) is float:
+        dT=1661.2-self.solidus(self.radius) # this gives 358.18 according to (A.2)
+        if type(r) is float: # single number vs array
             if PGPa<20.0:
                 dum2 = 1982.1*(PGPa/6.594+1.0)**(1.0/5.374)-dT
             else:
@@ -453,6 +498,73 @@ class Mars(CO2,H2O,REE):
                 else:
                     dum2[ii]=78.74*(PGPa[ii]/4.054e-3 + 1.0)**(1.0/2.44)-dT
         return(dum2)
+    def solidus(self,r):
+        """Returns solidus temperature (Deg Celsius)
+        enter radius in m
+        Duncan et al 2018 
+        """
+        PGPa=self.depth2PGPa(r)
+        self.PGPa=PGPa
+        if type(PGPa) is float: # single number vs array
+            if PGPa <= 10.0:
+                Tsolidus = - 4.877*PGPa**2. + 120.2*PGPa + 1088 #for P up to 10 GPa
+            elif PGPa > 10.0 and PGPa <= 23.0:
+                Tsolidus = - 1.323*(PGPa-10)**2 + 38.18*(PGPa-10) + 1802 #  for P between 10 and 23 GPa
+            else:
+                Tsolidus = 77.75*(PGPa-23) + 2075 # for P above 23 GPa
+        else:
+            n=PGPa.shape[0]        
+            Tsolidus=np.zeros(n)
+            for ii in range(0,n):
+                if PGPa[ii] <= 10.0:
+                    Tsolidus[ii] = - 4.877*PGPa[ii]**2. + 120.2*PGPa[ii] + 1088 #for P up to 10 GPa
+                elif PGPa[ii] > 10.0 and PGPa[ii] <= 23.0:
+                    Tsolidus[ii] = - 1.323*(PGPa[ii]-10)**2 + 38.18*(PGPa[ii]-10) + 1802 #  for P between 10 and 23 GPa
+                else:
+                    Tsolidus[ii] = 77.75*(PGPa[ii]-23) + 2075 # for P above 23 GPa
+        return(Tsolidus)
+    def liquidus(self,r):
+        """This function outlines
+        the liquidus of the Earth modified
+        for Mars. We assume that the liquidus
+        of Mars is depressed from that of the 
+        Earth by a uniform amount due to the 
+        presence of Fe in the interior of
+        Mars. The uniform amount is the difference
+        between surface values of the HMH17 and
+        ET08 solidi 
+        but using Duncan solidus"""
+        PGPa=self.depth2PGPa(r) # convert depth in m to pressure in GPa
+        self.PGPa=PGPa
+        dT=np.abs(1661.2 - self.ET08solidus(self.radius)) # this gives 358.18 according to (A.2) 1661.2 is from surface solidi Earth HMH17. 
+        if type(r) is float: # single number vs array
+            diff = self.solidus(r)-self.ET08solidus(r)#-100
+            if PGPa<20.0:
+                dum2 = 1982.1*(PGPa/6.594+1.0)**(1.0/5.374)-dT +diff
+            else:
+                dum2=78.74*(PGPa/4.054e-3 + 1.0)**(1.0/2.44)-dT+ diff
+        else:
+            n=r.shape[0]        
+            dum2=np.zeros(n)
+            # diff=np.zeros(n)
+            diff = self.solidus(r)-self.ET08solidus(r)#-100
+            # np.seterr(all='print')
+            for ii in range(0,n):
+                # if np.isnan(dT) == True or dT == 0 :
+                #     print("dT is NaN or zero:",dT)
+                # if np.isnan(diff[ii]) == True or diff[ii] == 0:
+                #     print("diff is NaN or zero:",diff[ii])
+                # if np.isnan(PGPa[ii]) == True or PGPa[ii] == 0:
+                #     print("PGPa is NaN or zero:",PGPa[ii])
+                if  diff[ii] == 0:
+                    print("diff is zero:",diff[ii])
+                if  PGPa[ii] == 0:
+                    print("PGPa is zero:",PGPa[ii])                # diff[ii] = self.solidus(r[ii])-self.ET08solidus(r[ii])
+                if PGPa[ii]<20.0:
+                    dum2[ii] = 1982.1*(PGPa[ii]/6.594+1.0)**(1.0/5.374)-dT+diff[ii]
+                else:
+                    dum2[ii]=78.74*(PGPa[ii]/4.054e-3 + 1.0)**(1.0/2.44)-dT+diff[ii]
+        return(dum2)
     def freezing_front(self,r):
         """Calculates the freezing front between the
         solidus and the liquidus, enter radius in m"""
@@ -460,7 +572,14 @@ class Mars(CO2,H2O,REE):
         Tliq=self.liquidus(r)
         Tfront=Tsol+0.3*(Tliq-Tsol)
         return(Tfront)
-        
+    def ET08freezing_front(self,r):
+        """Calculates the freezing front between the
+        solidus and the liquidus, enter radius in m, 
+        Is this a thickness?? """
+        Tsol=self.ET08solidus(r)
+        Tliq=self.ET08liquidus(r)
+        Tfront=Tsol+0.3*(Tliq-Tsol) # Equation (A.3)
+        return(Tfront)       
     def adiabat(self,T0,r):
         """Returns the adiabatic temperature profile
         enter potential temperature T0 and radius r
@@ -468,14 +587,14 @@ class Mars(CO2,H2O,REE):
         depth=self.radius-r #m depth from surface
         T=T0+self.gam*depth
         return(T)
-    def dadT_analytical(self,T):
+    def dadT_analytical(self,T): ## NEED To edit for new solidus
         """Calculates the value of da/dT from the fit"""
         #p=self.fit_coefficients
         p_hi=self.aT_fit_hi
         p_lo=self.aT_fit_lo
         if T<1350.0 or T>2070.0:
             dadT=0.0
-        elif T>1350.0 and T<1820.0:
+        elif T>1350.0 and T<1820.0: ## NEED To edit for new solidus
              #a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
             dadT=3.0*p_lo[0]*T**2+2.0*p_lo[1]*T+p_lo[2]
         else:
@@ -503,12 +622,13 @@ class Mars(CO2,H2O,REE):
         temp=Tsol-T
         return(temp)
         
-    def solid_radius(self,T0,guess=1.8e6):
+    def solid_radius(self,T0,guess=1.8e6): # guess=1.8e6
         """Calculates the solid radius for a potential temperature
         Returns the radius of residual mantle in m"""
         # WARNING!! The result for a is sensitive to the initial
         # guess in the fsolve call. 1.5e6-1.9e6 seems to work, a higher
         # or lower value can give negative a
+        # for Duncan  Solidus: 1.1e6-1.9e6
         a=scipy.optimize.fsolve(self.solid_find,guess,T0)-self.core
         if a < 0.0:
             a=0.0
@@ -653,27 +773,51 @@ class Mars(CO2,H2O,REE):
         epsilon = 2.0/(tau[0]+tau[1]+2.0)
         return(epsilon)
         
-    def PH2O_calculate(self,dMRM,MRM_prev,F,D,T,MMO):
-        """Calculates pressure of H2O from 
-        the masses on input
-        dMRM : incremental increase in RM mass
-        MRM_prev : Mass of H2O in RM from last time step
-        F    : Trapped melt fraction at the time step
-        D    : Water partition coefficient at that time step
-        T    : Temperature at the time step
-        """
-        #First update the reaction coefficient for temperature
+    # def PH2O_calculate(self,dMRM,MRM_prev,F,D,T,MMO):
+    #     """Calculates pressure of H2O from 
+    #     the masses on input
+    #     dMRM : incremental increase in RM mass
+    #     MRM_prev : Mass of H2O in RM from last time step
+    #     F    : Trapped melt fraction at the time step
+    #     D    : Water partition coefficient at that time step
+    #     T    : Temperature at the time step
+    #     """
+    #     #First update the reaction coefficient for temperature
         
-        term1=self.H2OMASS-MRM_prev
-        term2=self.KH2O*T*self.omega_H2O/self.omega_Moore
-        term3=(1.0-F)*D+F
-        term4=self.area/self.g
-        term5=term2*(MMO+dMRM*term3)
-        P= term1/(term4+term5)
-        c=P*term2
+    #     term1=self.H2OMASS-MRM_prev # total h2o mass - mass of h2o in RM in last time step
+    #     term2=self.KH2O*T*self.omega_H2O/self.omega_Moore
+    #     term3=(1.0-F)*D+F
+    #     term4=self.area/self.g
+    #     term5=term2*(MMO+dMRM*term3)
+    #     P= term1/(term4+term5)
+    #     c=P*term2
         
-        return(P,c)
-    def PCO2_calculate(self,dMRM,MRM_prev,F,D,T,MMO):
+    #     return(P,c)
+    # def PCO2_calculate(self,dMRM,MRM_prev,F,D,T,MMO):
+    #     """Calculates pressure of CO2 from 
+    #     the masses on input
+    #     dMRM : incremental increase in RM mass
+    #     MRM_prev : Mass of CO2 in RM from last time step
+    #     F    : Trapped melt fraction at the time step
+    #     D    : CO2 partition coefficient at that time step
+    #     T    : Temperature at the time step
+    #     """
+    #     #First update the reaction coefficient for temperature
+        
+    #     term1=self.CO2MASS-MRM_prev
+    #     self.KCO2=self.redox_factor*self.K0\
+    #                *np.exp(-self.dH*(1.0/T -1.0/self.T0)/self.R) # Equation 12
+        
+    #     #self.calc_kco2(T)
+    #     term2=self.KCO2*self.omega_CO2/self.omegaM
+    #     term3=(1.0-F)*D+F
+    #     term4=self.area/self.g
+    #     term5=term2*(MMO+dMRM*term3)
+    #     P= term1/(term4+term5)
+    #     c=P*term2
+        
+    #     return(P,c)
+    def PH2OPCO2_calculate(self,dMRM,MRM_hprev,MRM_cprev,PH2O_prev,PCO2_prev,F,D_h,D_c,T,MMO):
         """Calculates pressure of CO2 from 
         the masses on input
         dMRM : incremental increase in RM mass
@@ -682,21 +826,53 @@ class Mars(CO2,H2O,REE):
         D    : CO2 partition coefficient at that time step
         T    : Temperature at the time step
         """
-        #First update the reaction coefficient for temperature
+        # Initialise using partial pressure from previous time step
+        if PH2O_prev == 0 :      
+            P_h = 1.0
+        else:
+            P_h = PH2O_prev
+            
+        if PCO2_prev == 0 :      
+            P_c = 1.0
+        else:
+            P_c = PCO2_prev                  
+        P_hnew = 1e20
+        P_cnew = 1e20
+        dP_h = np.abs(P_hnew-P_h)/P_h
+        dP_c = np.abs(P_cnew-P_c)/P_c
+        # Ps = P_h + P_c
+        while dP_h > 1e-6 or dP_c > 1e-6: # Psnew/Ps > 1e-6: #
+            Ps = P_h + P_c
+            mu_mean = P_h*self.omega_H2O/Ps + P_c*self.omega_CO2/Ps
         
-        term1=self.CO2MASS-MRM_prev
-        self.KCO2=self.redox_factor*self.K0\
-                   *np.exp(-self.dH*(1.0/T -1.0/self.T0)/self.R)
+            #First update the reaction coefficient for temperature
+            term1_h=self.H2OMASS-MRM_hprev # total h2o mass - mass of h2o in RM in last time step
+            term2_h=self.KH2O*T*self.omega_H2O/self.omega_Moore
+            term3_h=(1.0-F)*D_h+F
+            term4_h=(self.omega_H2O/mu_mean)*self.area/self.g
+            term5_h=term2_h*(MMO+dMRM*term3_h)
+            P_hnew= term1_h/(term4_h+term5_h)
+            c_hnew=P_hnew*term2_h 
         
-        #self.calc_kco2(T)
-        term2=self.KCO2*self.omega_CO2/self.omegaM
-        term3=(1.0-F)*D+F
-        term4=self.area/self.g
-        term5=term2*(MMO+dMRM*term3)
-        P= term1/(term4+term5)
-        c=P*term2
-        
-        return(P,c)
+            term1_c=self.CO2MASS-MRM_cprev
+            self.KCO2=self.redox_factor*self.K0\
+                       *np.exp(-self.dH*(1.0/T -1.0/self.T0)/self.R)
+            #self.calc_kco2(T)
+            term2_c=self.KCO2*self.omega_CO2/self.omegaM
+            term3_c=(1.0-F)*D_c+F
+            term4_c=(self.omega_CO2/mu_mean)*self.area/self.g
+            term5_c=term2_c*(MMO+dMRM*term3_c)
+            P_cnew= term1_c/(term4_c+term5_c)
+            c_cnew=P_cnew*term2_c
+            
+            dP_h = np.abs(P_hnew-P_h)/P_h
+            dP_c = np.abs(P_cnew-P_c)/P_c
+            P_h = P_hnew
+            P_c = P_cnew
+            
+            
+        # print("Coupled pp: ",P_h,c_hnew,P_c,c_cnew)
+        return(P_h,c_hnew,P_c,c_cnew)
     def heat_flux(self,Tm,e):
         """Calculates radiative heat flux"""
         Tinf = 0.0   # Temperature outside the planet
@@ -726,7 +902,7 @@ class Mars(CO2,H2O,REE):
         dTdt    : the value of dT/dt for the time step K/s
         """
         F     = self.heat_flux(Tm,e)
-        term1 = -(self.radius**2)*(F-self.Fs)
+        term1 = -(self.radius**2)*(F-self.Fs) # Taking away the Fs is done twice? but doesn matter since both zeros - ee rk4. also in rk4 comments. 
         term2 = self.rho*Tm*self.dS*(a**2)*dadT
         term3 = self.rho*self.Cp*(self.radius**3 - a**3)/3.0
         dTdt  = term1/(term3-term2)
@@ -856,20 +1032,37 @@ class Mars(CO2,H2O,REE):
     def write_all_REE(self,const=False):
         """Writes REE concentrations for all time steps"""
         if const == False:
-            fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8\
-            =self.output_filenames()
+            fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
+                fname9,fname10=self.output_filenames()
         else:
-            fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8\
-            =self.output_filenames(const=True)
+            fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
+                fname9,fname10=self.output_filenames(const=True)
     
         txt5  = '# Evolution of  REE concentration in RM in the order :\
         Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
         txt6  = '#Evolution of REE concentration in MO in the order : \
         Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
         temp5=np.array([self.CREERM])
-        np.savetxt(fname5,temp5.T,delimiter=",",header=txt5)
+        # temp5=np.array([self.CREERM])
+        #print('temp5 length, size, shape, ndim = ',len(temp5), temp5.size, temp5.shape, temp5.ndim)
+        if temp5.ndim == 3:
+            reshaped_temp5 = temp5.reshape(temp5.shape[0], -1)
+            np.savetxt(fname5, reshaped_temp5, delimiter=",", header=txt5)
+        elif temp5.ndim < 3 :
+            np.savetxt(fname5,temp5.T,delimiter=",",header=txt5)
+        else:
+            print('Error: Array dimension more than 3')
         temp6=np.array([self.CREEMO])
-        np.savetxt(fname6,temp6.T,delimiter=",",header=txt6) 
+        if temp6.ndim == 3:
+            reshaped_temp6 = temp6.reshape(temp6.shape[0], -1)
+            np.savetxt(fname6, reshaped_temp6, delimiter=",", header=txt6)
+        elif temp6.ndim < 3 :
+            np.savetxt(fname6,temp6.T,delimiter=",",header=txt6) 
+        else:
+            print('Error: Array dimension more than 3')
+        # np.savetxt(fname5,temp5.T,delimiter=",",header=txt5)
+        # temp6=np.array([self.CREEMO])
+        # np.savetxt(fname6,temp6.T,delimiter=",",header=txt6) 
         
     def load_object_from_file(self):
        """This function loads data from simulated values.
@@ -915,6 +1108,7 @@ class Mars(CO2,H2O,REE):
         dt=tfinal/nsteps
         dT=self.T_init-self.T_surf
         dTdt=dT/tfinal
+        # print( type(dTdt))
         t=0
         e=self.emmissivity_initial()
         self.dTdt=0.0*self.T
@@ -929,7 +1123,11 @@ class Mars(CO2,H2O,REE):
             # guess
             self.a[ii]=self.solid_radius(self.T[ii],guess=\
                                          self.a[ii-1]+self.core)
+            if self.a[ii]<self.a[ii-1]:
+                print('Change in radius is negative, a1,a2,da: ', self.a[ii],self.a[ii-1],self.a[ii]-self.a[ii-1])
+                self.a[ii] = self.a[ii-1] # if radius is smaller than previous, make it equal previous step
             self.dTdt[ii]=self.rhs(self.t[ii],self.T[ii-1],self.a[ii],self.dadT[ii],e)
+            # print('dTdt: ', self.dTdt[ii],  type(dTdt))
             # Calculate masses of the reservoirs
             self.MRM[ii],self.MMO[ii]=self.masses(self.a[ii])
             self.dadT[ii]=self.dadT_analytical(self.T[ii])
@@ -937,12 +1135,12 @@ class Mars(CO2,H2O,REE):
             self.heatflux[ii]=self.heat_flux(self.T[ii],e)
             #calculate trapped melt fraction
             if const_Ftl == False:
-
-                self.Ftl[ii]=self.phic*self.tau*dTdt[ii]/self.deltaT
-
+                # print(type(self.Ftl), type(dTdt))
+                #self.Ftl[ii]=self.phic*self.tau*dTdt[ii]/self.deltaT
+                #self.Ftl[ii]=self.phic*self.tau*dTdt/self.deltaT
+                self.Ftl[ii]=-self.phic*self.tau*self.dTdt[ii]/self.deltaT
             else:
-                self.Ftl[ii]=0.01
-                
+                self.Ftl[ii]=0.01              
             
             if self.Ftl[ii]>=0.3:
                 self.Ftl[ii]=0.3
@@ -951,31 +1149,65 @@ class Mars(CO2,H2O,REE):
             self.partition_coefficients(self.a[ii])
             #change in residual mantle mass
             dMRM=self.MRM[ii]-self.MRM[ii-1]
+            if  dMRM < 0.0:
+                print('Change in mass of RM is negative: ', dMRM)
+            # ################################################
+            # ## Calculate water concentration and masses
+            # ################################################
+            # #This following step calculates the pressure
+            # #of H2O from masses, but works for less than
+            # #3 oceans of water in the starting composition
+            # self.PH2O[ii],self.CH2OMO[ii]=self.PH2O_calculate(dMRM,\
+            #  self.MH2ORM[ii-1],self.Ftl[ii],self.DH2O,self.T[ii],self.MMO[ii])
+            # if  self.CH2OMO[ii] < 0.0:
+            #     print('Change in conc of H2O in MO is Negative: ', self.CH2OMO[ii])
+            # #Now update the mass of H2O in self.CH2OMO[ii]each reservoir
+            # self.MH2OMO[ii]=self.MMO[ii]*self.CH2OMO[ii]
+            # self.MH2OPA[ii]=self.area*self.PH2O[ii]/self.g
+            # dMRMH2O=dMRM*((1.0-self.Ftl[ii])*self.DH2O+self.Ftl[ii])\
+            #          *self.CH2OMO[ii]
+                    
+            # if  dMRMH2O < 0.0:
+            #     print('Change in mass of H2O in RM is Negative: ', dMRMH2O)
+            # self.MH2ORM[ii]=self.MH2ORM[ii-1]+dMRMH2O
+            # if self.MH2ORM[ii] < 0.0:
+            #     print('ii: ', ii)
+            #     print('Mass of H2O is Negative: ',self.MH2ORM[ii])
+                
+            # #################################################
+            # ## Calculate CO2 mass and pressures
+            # #################################################
+            # self.PCO2[ii],self.CCO2MO[ii]=self.PCO2_calculate(dMRM,\
+            #  self.MCO2RM[ii-1],self.Ftl[ii],self.DCO2,self.T[ii],self.MMO[ii])
+            # #Now update the mass of CO2 in self.CH2OMO[ii]each reservoir
+            # self.MCO2MO[ii]=self.MMO[ii]*self.CCO2MO[ii]
+            # self.MCO2PA[ii]=self.area*self.PCO2[ii]/self.g
+            # dMRMCO2=dMRM*((1.0-self.Ftl[ii])*self.DCO2+self.Ftl[ii])\
+            #          *self.CCO2MO[ii]
+            # self.MCO2RM[ii]=self.MCO2RM[ii-1]+dMRMCO2
+            # if self.MCO2RM[ii] < 0.0:
+            #     print('Mass of CO2 is Negative: ',self.MCO2RM[ii])
+            
             ################################################
-            ## Calculate water concentration and masses
+            ## Calculate coupled water and CO2 concentrations and masses
             ################################################
             #This following step calculates the pressure
             #of H2O from masses, but works for less than
             #3 oceans of water in the starting composition
-            self.PH2O[ii],self.CH2OMO[ii]=self.PH2O_calculate(dMRM,\
-             self.MH2ORM[ii-1],self.Ftl[ii],self.DH2O,self.T[ii],self.MMO[ii])
+            self.PH2O[ii],self.CH2OMO[ii],self.PCO2[ii],self.CCO2MO[ii]=self.PH2OPCO2_calculate(dMRM,\
+              self.MH2ORM[ii-1],self.MCO2RM[ii-1],self.PH2O[ii],self.PCO2[ii],self.Ftl[ii],self.DH2O,self.DCO2,self.T[ii],self.MMO[ii])
             #Now update the mass of H2O in self.CH2OMO[ii]each reservoir
             self.MH2OMO[ii]=self.MMO[ii]*self.CH2OMO[ii]
             self.MH2OPA[ii]=self.area*self.PH2O[ii]/self.g
             dMRMH2O=dMRM*((1.0-self.Ftl[ii])*self.DH2O+self.Ftl[ii])\
-                     *self.CH2OMO[ii]
+                      *self.CH2OMO[ii]
             self.MH2ORM[ii]=self.MH2ORM[ii-1]+dMRMH2O
-            #################################################
-            ## Calculate CO2 mass and pressures
-            #################################################
-            self.PCO2[ii],self.CCO2MO[ii]=self.PCO2_calculate(dMRM,\
-             self.MCO2RM[ii-1],self.Ftl[ii],self.DCO2,self.T[ii],self.MMO[ii])
             #Now update the mass of CO2 in self.CH2OMO[ii]each reservoir
             self.MCO2MO[ii]=self.MMO[ii]*self.CCO2MO[ii]
             self.MCO2PA[ii]=self.area*self.PCO2[ii]/self.g
             dMRMCO2=dMRM*((1.0-self.Ftl[ii])*self.DCO2+self.Ftl[ii])\
-                     *self.CCO2MO[ii]
-            self.MCO2RM[ii]=self.MCO2RM[ii-1]+dMRMCO2
+                      *self.CCO2MO[ii]
+            self.MCO2RM[ii]=self.MCO2RM[ii-1]+dMRMCO2            
             #####################################################
             ## Calculate REE Mass in the RM
             #####################################################
@@ -993,6 +1225,29 @@ class Mars(CO2,H2O,REE):
                 self.CH2ORM[ii]=self.MH2ORM[ii]/self.MRM[ii]
                 self.CCO2RM[ii]=self.MCO2RM[ii]/self.MRM[ii]
                 self.CREERM[:,ii]=self.MREERM[:,ii]/self.MRM[ii]
+                
+            if self.CH2ORM[ii] < 0.0:
+                print('Conc of H2O is Negative: ',self.CH2ORM[ii])
+                print( '###########################################')
+                print( 'Simulation finished after iterations',ii)
+                print( 'Total oceans of H2O:',self.noceansH2O)
+                print( 'Total oceans of CO2:',self.noceansCO2)
+                print( 'H:C ratio',self.HoverC)
+                print( 'Redox factor',self.redox_factor)
+                print( 'Trapped melt fraction: ', self.Ftl[ii])
+                print( 'H2O conc. (ppm) in RM:',self.CH2ORM[ii]*1.0e6)
+                print( 'CO2 conc.(ppm) in RM:', self.CCO2RM[ii]*1.0e6)
+                print( 'Pressure of CO2 in atmosphere (bars):', self.PCO2[ii]*1.0e-5)
+                print( 'Pressure of H2O in atmosphere (bars):', self.PH2O[ii]*1.0e-5)
+                print( 'Time (Ma):', self.t[ii]*1.0e-6/365/24/3600)
+                print( '###########################################')
+                print('Breaking out of the loop')
+                break
+            
+            if self.CCO2RM[ii] < 0.0:
+                print('Conc of CO2 is Negative: ',self.CCO2RM[ii])
+                print('Breaking out of the loop')
+                break
 
             ##########################################################
             ## Calculate REE concentration in the MO
@@ -1014,17 +1269,17 @@ class Mars(CO2,H2O,REE):
             #print '% MO solidified: ', percent_solid            
             # Create a special object for creating output
             # of REEs at 80% and 90% crystallization
-            #if percent_solid >80.0 and percent_solid<81.0:
-            #    self.CREE_RM80=self.CREERM[:,ii]
-            #    self.CREE_MO80=self.CREEMO[:,ii]
-            #    print '80% shape and values'
+            if percent_solid >80.0 and percent_solid<81.0:
+                self.CREE_RM80=self.CREERM[:,ii]
+                self.CREE_MO80=self.CREEMO[:,ii]
+                # print( '80% shape and values')
             #    print np.shape(self.CREE_RM80)
             #    print self.CREE_RM80
             #Only uncomment the following for special cases    
-            #if percent_solid>90.0 and percent_solid<91.0:
-            #    self.CREE_RM90 =self.CREERM[:,ii]
-            #    self.CREE_MO90=self.CREEMO[:,ii]
-            #    print '90% shape and values'
+            if percent_solid>90.0 and percent_solid<91.0:
+                self.CREE_RM90 =self.CREERM[:,ii]
+                self.CREE_MO90=self.CREEMO[:,ii]
+                # print( '90% shape and values')
             #    print np.shape(self.CREE_RM90)
             #    print self.CREE_RM90
             if percent_solid > 99.5:
@@ -1042,18 +1297,25 @@ class Mars(CO2,H2O,REE):
         self.akm=self.a*1.0e-3
         self.create_output(const=const_Ftl)
         # Print out some useful numbers
-        print '###########################################'
-        print 'Simulation finished after iterations',ii
-        print 'Total oceans of H2O:',self.noceansH2O
-        print 'Total oceans of CO2:',self.noceansCO2
-        print 'H:C ratio',self.HoverC
-        print 'Redox factor',self.redox_factor
-        print 'H2O conc. (ppm) in RM:',temp1
-        print 'CO2 conc.(ppm) in RM:', temp2
-        print 'Pressure of CO2 in atmosphere (bars):', temp3
-        print 'Pressure of H2O in atmosphere (bars):', temp4
-        print 'Time to crystallization (Ma):', temp5
-        print '###########################################'
+        print( '###########################################')
+        print( 'Simulation finished after iterations',ii)
+        print( 'Total oceans of H2O:',self.noceansH2O)
+        print( 'Total oceans of CO2:',self.noceansCO2)
+        print( 'H:C ratio',self.HoverC)
+        print( 'Redox factor',self.redox_factor)
+        print( 'Percent solid: ', percent_solid)
+        print( 'Radius: ', self.akm[ii-5],self.akm[ii-4],self.akm[ii-3],self.akm[ii-2])
+        print( 'Temperature: ', self.T[ii-5],self.T[ii-4],self.T[ii-3],self.T[ii-2])
+        print( 'Time (Ma): ', self.tma[ii-5],self.tma[ii-4],self.tma[ii-3],self.tma[ii-2])
+        # self.radius_test(self.T[0],fignum=1)
+        # self.Duncan_radius_temperature_analytical(plot=True)
+        # plt.show();
+        print( 'H2O conc. (ppm) in RM:',temp1)
+        print( 'CO2 conc.(ppm) in RM:', temp2)
+        print( 'Pressure of CO2 in atmosphere (bars):', temp3)
+        print( 'Pressure of H2O in atmosphere (bars):', temp4)
+        print( 'Time to crystallization (Ma):', temp5)
+        print( '###########################################')
         return(ii-1)
  ###################################################
  #######Functions for testing the code
@@ -1131,10 +1393,121 @@ class Mars(CO2,H2O,REE):
             plt.ylim(0.0,2000.0)
             plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
             plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
-            print 'Coefficients between 1820 and 2080',p_high
-            print 'Coefficients between 1350 and 1820',p_low
-            
+            print( 'Coefficients between 1820 and 2080',p_high)
+            print( 'Coefficients between 1350 and 1820',p_low)
+
+    def Duncan_radius_temperature_analytical(self,plot=False):
+        """Calculates the radius as a function of temperature
+        and gives a polynomial fit"""
         
+        T=np.linspace(self.T_surf,self.T_init,100)
+        a=0.0*T
+        
+        index=np.zeros(100)
+        for ii in range (0,99):
+            a[ii]=self.solid_radius(T[ii])
+            
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>1400.0 and T[ii] < 2005.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT=np.extract(index,T)
+        aa=np.extract(index,a)
+        p_low=np.polyfit(TT,aa,3)
+    
+        index=np.zeros(100)
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>2005.0 and T[ii] < 2650.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT1=np.extract(index,T)
+        aa1=np.extract(index,a)
+        p_high=np.polyfit(TT1,aa1,2)
+        
+        
+        if plot==True:
+            temp_label=[1600,2000,2400,2800]
+            plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
+            T_high=np.linspace(2005.0,2650.0)
+            T_low=np.linspace(1400.0,2005.0)
+
+            a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
+            a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
+            plt.plot(T_high,a_high/1.0e3,'-',color='steelblue',lw=4)
+            plt.legend(['Numerical','Fit'],fancybox=True,framealpha=0.7,loc=3)
+            plt.plot(2265,330.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(1760,1456.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(T_low,a_low/1.0e3,'-',color='steelblue',lw=4)
+            plt.xticks(temp_label)
+            plt.ylim(0.0,2000.0)
+            plt.xlim(1400.0,3000.0)
+            plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
+            plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
+            print( 'Coefficients between 2005 and 2650',p_high)
+            print( 'Coefficients between 1400 and 2005',p_low)
+                        
+    def Duncan_NewCore_radius_temperature_analytical(self,plot=False):
+        """Calculates the radius as a function of temperature
+        and gives a polynomial fit"""
+        
+        T=np.linspace(self.T_surf,self.T_init,100)
+        a=0.0*T
+        
+        index=np.zeros(100)
+        for ii in range (0,99):
+            a[ii]=self.solid_radius(T[ii])
+            
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>1200.0 and T[ii] < 2010.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT=np.extract(index,T)
+        aa=np.extract(index,a)
+        p_low=np.polyfit(TT,aa,3)
+    
+        index=np.zeros(100)
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>2010.0 and T[ii] < 2200.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT1=np.extract(index,T)
+        aa1=np.extract(index,a)
+        p_high=np.polyfit(TT1,aa1,2)
+        
+        
+        if plot==True:
+            temp_label=[1200,1600,2000,2400,2800]
+            plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
+            T_high=np.linspace(2010.0,2200.0)
+            T_low=np.linspace(1200.0,2010.0)
+
+            a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
+            a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
+            plt.plot(T_high,a_high/1.0e3,'-',color='steelblue',lw=4)
+            plt.legend(['Numerical','Fit'],fancybox=True,framealpha=0.7,loc=3)
+            plt.plot(2055,90.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(1575,1310.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(T_low,a_low/1.0e3,'-',color='steelblue',lw=4)
+            plt.xticks(temp_label)
+            plt.ylim(0.0,2000.0)
+            plt.xlim(1200.0,2800.0)
+            plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
+            plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
+            print( 'Coefficients between 2010 and 2200',p_high)
+            print( 'Coefficients between 1200 and 2010',p_low)
+            
 class Mars_read(REE):
     """
     A class for loading some data for a Mars
@@ -1287,6 +1660,7 @@ class Mars_read(REE):
         plt.text(0.8,1800,r'$K^\ast$ ={:3.2f}'.format(self.redox_factor),fontsize=30)
         plt.text(0.03,1500,'(a)',fontsize=40,fontweight='bold')
         ax1.set_yticks([1600,2000,2400])
+        # plt.xlim(0.0,1.5)
         ax1=plt.subplot(3,1,2)
         plt.plot(self.tma,self.MMO/1.0e23,'salmon',linewidth=4)
         plt.plot(self.tma,self.MRM/1.0e23,'steelblue',linewidth=4)
@@ -1297,6 +1671,7 @@ class Mars_read(REE):
         ax1.spines['right'].set_position(('outward', 0))
         plt.ylabel(r'Mass ($10^{23}$ kg)',fontsize=30,labelpad=20)
         ax1.set_yticks([2.0,4.0,6.0])
+        # plt.xlim(0.0,1.5)
         #ax1=plt.subplot(4,1,3)
         #plt.plot(self.tma,self.Ftl,'forestgreen',linewidth=4)
         #plt.ylabel(r'$F_tl$',fontsize=30)
@@ -1306,6 +1681,7 @@ class Mars_read(REE):
         plt.xlabel('Time (Ma)',fontsize=30)
         plt.text(0.03,300,'(c)',fontsize=40,fontweight='bold')
         ax1.set_yticks([500,1000,1500])
+        # plt.xlim(0.0,1.5)
     def kg2GELm(self,M,rho_fluid=1.0e3):
         """
         This function converts mass of water in kg to
