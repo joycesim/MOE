@@ -76,10 +76,10 @@ def compare_Ftl_models():
     plt.ylabel(r"${P_{CO2}}$ (bar)",fontsize=30)
     #plt.xlabel('Time (Ma)',fontsize=30)
     
-    yticks_bar=([140,160,180,200,220])
-    plt.text(1.5,147,'(a)',fontsize=50,fontweight='bold')
+    yticks_bar=([140,180,220])
+    plt.text(1.1,147,'(a)',fontsize=50,fontweight='bold')
     ax1.set_yticks(yticks_bar)
-    plt.ylim(140,220)
+    plt.ylim(140,230)
     ################
     ax2=ax1.twinx()    
     newpos   = 0.1*np.array(yticks_bar)
@@ -91,7 +91,7 @@ def compare_Ftl_models():
     ax2.spines['right'].set_position(('outward', 0))
     ax2.set_ylabel(r"${P_{CO2}}$ (MPa)",fontsize=30,labelpad=20)
     plt.ylim(22,25)
-    plt.xlim(0.00,1.75)
+    plt.xlim(0.00,1.25 )
     ###############
     ax2=plt.subplot(2,2,2)
     plt.plot(obj1.tma,obj1.MH2ORM/1.0e21,color='forestgreen',linewidth=4)
@@ -103,14 +103,14 @@ def compare_Ftl_models():
     ax2.yaxis.set_label_position('right') 
     ax2.spines['right'].set_position(('outward', 0))
     plt.legend([r'Dynamic $F_{tl}$',r'Constant $F_{tl}$'],fancybox=True,framealpha=0.7,loc=2)
-    plt.xlim(0.00,1.75)
+    plt.xlim(0.00,1.25 )
     ax1=plt.subplot(2,2,3)
     plt.plot(obj1.tma,obj1.PH2O/1.0e5,color='forestgreen',linewidth=4)
     plt.plot(obj2.tma,obj2.PH2O/1.0e5,ls='--',color='darkorange',linewidth=4)
     plt.ylabel(r"${P_{H2O}}$ (bar)",fontsize=30)
     plt.xlabel('Time (Ma)',fontsize=30)
     yticks_bar=([50,100,150,200,250,300])
-    plt.text(1.5,25,'(c)',fontsize=50,fontweight='bold')
+    plt.text(1.1,25,'(c)',fontsize=50,fontweight='bold')
     ##################
     GEL=obj1.kg2GELm(obj1.H2OMASS)/1.0e3
     plt.text(0.1,220,'{:3.2f} GEL (km)'.format(GEL),fontsize=30)
@@ -126,7 +126,7 @@ def compare_Ftl_models():
     ax2.yaxis.set_label_position('right') 
     ax2.spines['right'].set_position(('outward', 0))
     ax2.set_ylabel(r"${P_{H2O}}$ (MPa)",fontsize=30,labelpad=20)
-    plt.xlim(0.00,1.75)
+    plt.xlim(0.00,1.25 )
     ###############
     ax2=plt.subplot(2,2,4)
     plt.plot(obj1.tma,obj1.MH2OMO/1.0e21,color='forestgreen',linewidth=4)
@@ -138,7 +138,8 @@ def compare_Ftl_models():
     ax2.yaxis.set_ticks_position('right') 
     ax2.yaxis.set_label_position('right') 
     ax2.spines['right'].set_position(('outward', 0))
-    plt.xlim(0.00,1.75)
+    plt.xlim(0.00,1.25 )
+    plt.ylim(0.0,1.4)
     ###################
     print( '#########################')
     print( 'Final PH2O (bar), dynamic:',np.max(obj1.PH2O/1.0e5))
@@ -163,14 +164,14 @@ def compare_evolution(obj1,obj2):
     plt.plot(obj2.tma,obj2.T,ls='--',color='dimgray',linewidth=4)
     plt.legend([r'$K^\ast = ${:.2f}'.format(obj1.redox_factor), r'$K^\ast = ${:.2f}'.format(obj2.redox_factor)],fancybox=True,framealpha=0.7)
     plt.ylabel(r'$T^\mathrm{o}$C',fontsize=30)
-    plt.text(1.2,1550,'(a)',fontsize=40,fontweight='bold')
+    plt.text(2.0,1500,'(a)',fontsize=40,fontweight='bold')
     plt.xlim(0.0,2.25)
     ##############################################
     ax1=plt.subplot(3,1,2)
     plt.plot(obj1.tma,obj1.PCO2/1.0e5,color='cornflowerblue',linewidth=4)
     plt.plot(obj2.tma,obj2.PCO2/1.0e5,ls='--',color='dimgray',linewidth=4)
     plt.ylabel(r"${P_{CO2}}$ (bar)",fontsize=30)
-    plt.text(1.2,45,'(b)',fontsize=40,fontweight='bold')
+    plt.text(2.0,45,'(b)',fontsize=40,fontweight='bold')
     plt.yticks([50,150,250,350])
     plt.xlim(0.0,2.25)
     ################
@@ -191,7 +192,7 @@ def compare_evolution(obj1,obj2):
     plt.plot(obj2.tma,obj2.PH2O/1.0e5,ls='--',color='dimgray',linewidth=4)
     plt.ylabel(r"${P_{H2O}}$ (bar)",fontsize=30)
     plt.xlabel('Time (Ma)',fontsize=30)
-    plt.text(1.2,20,'(c)',fontsize=40,fontweight='bold')
+    plt.text(2.0,20,'(c)',fontsize=40,fontweight='bold')
     plt.xlim(0.0,2.25)
     ################
     ax2=ax1.twinx()
@@ -536,7 +537,7 @@ def redox_plots(k1,n1=0.8,n2=0.4,H_over_C=0.55):
 
     plt.ylabel('Freezing Time (Ma)')
     plt.yticks([0.1,0.5,1.0,1.5])
-    plt.text(2000,1,'(a)',fontweight='bold',fontsize=40)
+    plt.text(2000,1.5,'(a)',fontweight='bold',fontsize=40)
     ax1=plt.subplot(3,1,2)
     plt.semilogx(k1,CO2_pressure/1.0e5,'s',markersize=25,color = 'indianred')
     plt.semilogx(k1,CO2_pressure_a/1.0e5,'o',markersize=25,color = 'steelblue')
@@ -548,7 +549,7 @@ def redox_plots(k1,n1=0.8,n2=0.4,H_over_C=0.55):
     yticks_bar=[50,100,150,200]
     plt.yticks([50,100,150,200])
     plt.ylabel(r"${P_{CO2}}$ (bar)",fontsize=30)
-    plt.text(2000,200,'(b)',fontweight='bold',fontsize=40)
+    plt.text(2000,160,'(b)',fontweight='bold',fontsize=40)
     ################
     ax2=ax1.twinx()
     newpos   = 0.1*np.array(yticks_bar)
@@ -619,8 +620,32 @@ def REE_plots(mars1,mars_const):
     plt.figure(figsize=(16,18))
 
     #plt.semilogy(REE,(mars1.BD_TL995/mars1.CI_REE),'s',color='salmon',MArkerFacecolor='None',markersize=20)
-    plt.semilogy(REE,(mars1.CREEMO_final/mars1.CI_REE),'s',color='darkorange',markersize=20)
-    #    plt.semilogy(REE,(mars1.CREEMO_80/mars1.CI_REE),'d',color='steelblue',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_final/mars1.CI_REE),'s-',color='maroon',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_98/mars1.CI_REE),'d-',color='red',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_90/mars1.CI_REE),'d-',color='darkorange',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_80/mars1.CI_REE),'d-',color='yellow',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_60/mars1.CI_REE),'d-',color='lime',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_20/mars1.CI_REE),'d-',color='turquoise',markersize=20)
+    plt.semilogy(REE,(mars1.CREEMO_05/mars1.CI_REE),'d-',color='steelblue',markersize=20)
+    plt.semilogy(REE,(mars1.BD_PCS4/mars1.CI_REE),'-',color='darkorange')
+    plt.xticks(REE,REE_label,rotation='vertical',fontsize=30)
+
+    plt.legend([ r'MO after 99.5$\%$ crystallization',r'98.0$\%$',r'90.0$\%$',r'80.0$\%$',r'60.0$\%$',r'20.0$\%$', r'5.0$\%$','Borg and Draper (2003)'],loc=4,fancybox=True,framealpha=0.7)
+
+    plt.figure(figsize=(16,18))
+
+    #plt.semilogy(REE,(mars1.BD_TL995/mars1.CI_REE),'s',color='salmon',MArkerFacecolor='None',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_final/mars1.CI_REE),'s-',color='maroon',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_98/mars1.CI_REE),'d-',color='red',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_90/mars1.CI_REE),'d-',color='darkorange',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_80/mars1.CI_REE),'d-',color='yellow',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_60/mars1.CI_REE),'d-',color='lime',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_20/mars1.CI_REE),'d-',color='turquoise',markersize=20)
+    plt.semilogy(REE,(mars1.CREERM_05/mars1.CI_REE),'d-',color='steelblue',markersize=20)
+    plt.semilogy(REE,(mars1.BD_PCS4/mars1.CI_REE),'-',color='darkorange')
+    plt.xticks(REE,REE_label,rotation='vertical',fontsize=30)
+
+    plt.legend([ r'RM after 99.5$\%$ crystallization',r'98.0$\%$',r'90.0$\%$',r'80.0$\%$',r'60.0$\%$',r'20.0$\%$', r'5.0$\%$','Borg and Draper (2003)'],loc=4,fancybox=True,framealpha=0.7)
 
     plt.figure(figsize=(13,15))
 
@@ -765,11 +790,11 @@ def REE_plots_no_meteorites(mars1,mars_const):
     data_out=np.array([REE_label,mars1.CREEMO_final*1.0e6,mars1.CREERM_80*1.0e6,mars_const.CREERM_80*1.0e6,mars1.BD_PCS4*1.0e6]).T
     print( np.shape(data_out))
     np.savetxt('Trace_elements.csv',data_out,fmt='%s',delimiter=',',header=str(['Elements','MO after 99.5%','RM after 80%','RM constant Ftl after 80%','Borg and Draper PCS4']))
-def solidus_plot():
+def smallerCore_solidus_plot():
     """Plots the solidus and adiabat"""
     #########################################################
     # Plot: Show solidus liquidus and adiabat
-    # 
+    # ***Need to change core size and ... 
     ###########################################################
     mars_sol=Mars()
     print( 'Mars core radius (km)',mars_sol.core/1.0e3)
@@ -783,12 +808,11 @@ def solidus_plot():
     front=mars_sol.freezing_front(r)
     rad1=mars_sol.solid_radius(2100.0)
 
-    T1=mars_sol.adiabat(2050.0,r)
+    T1=mars_sol.adiabat(2100.0,r)
     rad2=mars_sol.solid_radius(1600.0)
 
-    
     T2=mars_sol.adiabat(1550.0,r)
-    temp_label=[1400,1800,2200,2600]
+    temp_label=[1000,1400,1800,2200,2600,3000]
     
     plt.figure(figsize=(19,12))
     #
@@ -806,27 +830,27 @@ def solidus_plot():
 
     plt.plot(T1,r_mantle_km,'-k',linewidth=4)
     plt.plot(T2,r_mantle_km,'-k',linewidth=4)
-    plt.plot(2290,146.0,'o',color='tomato',markersize=20,alpha=0.7)
-    plt.plot(1571,1776.0,'o',color='tomato',markersize=20,alpha=0.7)
+    plt.plot(2300,450.0,'o',color='tomato',markersize=20,alpha=0.7)
+    plt.plot(1580,1715.0,'o',color='tomato',markersize=20,alpha=0.7)
     # plt.plot(2050,146.0,'o',color='tomato',markersize=20,alpha=0.7) # plot from 
     # plt.plot(1550,1776.0,'o',color='tomato',markersize=20,alpha=0.7)
     #plt.ylim(1395.0,3390.0)
     plt.ylim(0.0,2000.0)
-    
-    plt.text(1520,1350,r'1550$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
-    plt.text(2150,1350,r'2050$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
+    # plt.xlim(1000.0,2000.0)
+    plt.text(1580,1050,r'1550$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
+    plt.text(2150,1050,r'2050$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
     plt.xlabel(r'Temperature ($^\mathrm{o}$C)',fontsize=30)
     plt.ylabel('Height above CMB (km)',fontsize=30)
 
     #plt.text(1400,150,'(a)',fontsize=60,fontweight='bold')
     plt.text(2400,1850,'(a)',fontsize=60,fontweight='bold')
-    FFL=130 #km thickness of the FF
-    rect=patches.Rectangle((1200,1776),1600, -FFL, color='firebrick',alpha=0.4)
+    FFL=70 #km thickness of the FF
+    rect=patches.Rectangle((1000,1650),2200, FFL, color='firebrick',alpha=0.4)
     ax.add_patch(rect)
-    plt.text(2100,1700,'FF %3.0f km thick'%FFL)
+    plt.text(2200,1650,'FF %3.0f km thick'%FFL)
 
     plt.subplot(1,2,2)
-    mars_sol.radius_temperature_analytical(plot=True)
+    mars_sol.smallerCore_radius_temperature_analytical(plot=True)
     plt.xticks(temp_label)
     plt.ylim(0.0,2000.0)
 
@@ -844,7 +868,7 @@ def solidus_plot():
     
     del mars_sol
     
-def newcore_solidus_plot():
+def ET08_solidus_plot():
     """Plots the solidus and adiabat"""
     #########################################################
     # Plot: Show solidus liquidus and adiabat
@@ -885,8 +909,8 @@ def newcore_solidus_plot():
 
     plt.plot(T1,r_mantle_km,'-k',linewidth=4)
     plt.plot(T2,r_mantle_km,'-k',linewidth=4)
-    plt.plot(2220,250.0,'o',color='tomato',markersize=20,alpha=0.7)
-    plt.plot(1600,1326.0,'o',color='tomato',markersize=20,alpha=0.7)
+    plt.plot(2250,90.0,'o',color='tomato',markersize=20,alpha=0.7)
+    plt.plot(1590,1320.0,'o',color='tomato',markersize=20,alpha=0.7)
     #plt.ylim(1395.0,3390.0)
     plt.ylim(0.0,1600.0)
     
@@ -897,8 +921,8 @@ def newcore_solidus_plot():
 
     #plt.text(1400,150,'(a)',fontsize=60,fontweight='bold')
     plt.text(2500,1450,'(a)',fontsize=60,fontweight='bold')
-    FFL=120 #km thickness of the FF
-    rect=patches.Rectangle((1200,1220),1400, FFL, color='firebrick',alpha=0.4)
+    FFL=70 #km thickness of the FF
+    rect=patches.Rectangle((1000,1250),1800, FFL, color='firebrick',alpha=0.4)
     ax.add_patch(rect)
     plt.text(2200,1250,'FF %3.0f km thick'%FFL)
 
@@ -1077,6 +1101,83 @@ def NewCore_Duncan_solidus_plot():
     
     del mars_sol
     
+def Stanley_solidus_plot():
+    """Plots the solidus and adiabat"""
+    #########################################################
+    # Plot: Show solidus liquidus and adiabat
+    # 
+    ###########################################################
+    mars_sol=Mars()
+    print ('Mars core radius (km)',mars_sol.core/1.0e3)
+    print ('Mars planetary radius (km)',mars_sol.radius/1.0e3)
+    print ('Mars mantle thickness',(mars_sol.radius-mars_sol.core)/1.0e3)
+    r=np.linspace(mars_sol.core,mars_sol.radius) #radius in m
+    r_mantle_km=(r-mars_sol.core)*1.0e-3
+    PGPa=mars_sol.depth2PGPa(r)
+    solidus=mars_sol.solidus(r)
+    liquidus=mars_sol.liquidus(r)
+    front=mars_sol.freezing_front(r)
+    rad1=mars_sol.solid_radius(2100.0)
+
+    T1=mars_sol.adiabat(2050.0,r)
+    rad2=mars_sol.solid_radius(1600.0)
+
+    
+    T2=mars_sol.adiabat(1550.0,r)
+    temp_label=[1200,1600,2000,2400,2800]
+    
+    plt.figure(figsize=(16,10))
+    #
+    plt.subplot(1,2,1)
+    ax = plt.gca()
+    
+    plt.plot(liquidus,r_mantle_km,'--',color='firebrick',linewidth=4)
+    plt.plot(front,r_mantle_km,'-.',color='teal',linewidth=4)
+    plt.plot(solidus,r_mantle_km,'-',color='darkslategray',linewidth=4)
+    plt.xticks(temp_label)
+    ax.fill_betweenx(r_mantle_km,front, solidus, where=front>= solidus, alpha=0.7,  facecolor='teal',)
+    
+
+    plt.legend(['Liquidus','Front','Solidus'],loc=3,fancybox=True,framealpha=0.7)
+
+    plt.plot(T1,r_mantle_km,'-k',linewidth=4)
+    plt.plot(T2,r_mantle_km,'-k',linewidth=4)
+    plt.plot(2245,90.0,'o',color='tomato',markersize=20,alpha=0.7)
+    plt.plot(1590,1310.0,'o',color='tomato',markersize=20,alpha=0.7)
+    #plt.ylim(1395.0,3390.0)
+    plt.ylim(0.0,1600.0)
+    plt.xlim(1200.0,2800.0)
+    
+    plt.text(1500,550,r'1550$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
+    plt.text(2150,550,r'2050$^\mathrm{o}$ adiabat',rotation=-85,fontsize=30)
+    plt.xlabel(r'Temperature ($^\mathrm{o}$C)',fontsize=30)
+    plt.ylabel('Height above CMB (km)',fontsize=30)
+
+    #plt.text(1400,150,'(a)',fontsize=60,fontweight='bold')
+    plt.text(2450,1450,'(a)',fontsize=60,fontweight='bold')
+    FFL=60 #km thickness of the FF
+    rect=patches.Rectangle((1200,1250),1600, FFL, color='firebrick',alpha=0.4)
+    ax.add_patch(rect)
+    plt.text(2120,1250,'FF %3.0f km thick'%FFL)
+
+    plt.subplot(1,2,2)
+    mars_sol.Stanley_radius_temperature_analytical(plot=True)
+    plt.xticks(temp_label)
+    plt.ylim(0.0,1600.0)
+
+    #plt.text(1400,150,'(b)',fontsize=60,fontweight='bold')
+    plt.text(2450,1450,'(b)',fontsize=60,fontweight='bold')
+
+    #
+    #Plot dadT if neede
+    #plt.subplot(1,3,1)
+    #T=np.linspace(1300.0,2150.0,100)
+    #dadT=0.0*T
+    #for ii in range (0,99):
+    #            dadT[ii]=mars_sol.dadT_analytical(T[ii])
+    #plt.plot(T,dadT/1.0e3,'or')
+    
+    del mars_sol
     
 def tau_calc():
     """This function calculates the ranges of
@@ -1118,7 +1219,8 @@ def compare_compaction(tau,redox):
     plt.subplot(2,1,1)
     plt.semilogx(tau,Ftl[:,2],'s',mfc='forestgreen',markersize=30)
     plt.semilogx(tau,Ftl[:,2],'-',color='forestgreen',lw=3)
-    
+    plt.text(0.001,0.3,'(a)',fontsize=60,fontweight='bold')
+
     plt.ylim(0,0.35)
     plt.ylabel(r'Time averaged $F_{tl}$',fontsize=30)
     plt.subplot(2,1,2)
@@ -1126,7 +1228,9 @@ def compare_compaction(tau,redox):
     plt.semilogx(tau,GEL[:,2],'-',color='forestgreen',lw=3)
     plt.ylabel(r'H$_2$O GEL (m)',fontsize=30)
     plt.xlabel(r'$\tau$ (Ma)',fontsize=30)
+    plt.text(0.001,5200,'(b)',fontsize=60,fontweight='bold')
     plt.ylim(1000,6000)
+    
     plt.figure(figsize=(12,16))
     plt.subplot(2,1,1)
     
@@ -1145,6 +1249,8 @@ def compare_compaction(tau,redox):
     plt.semilogx(tau,MCO2RM[:,0],'o',mfc='steelblue',markersize=30)
     #plt.xlabel(r'$\tau$ (Ma)',fontsize=30)
     plt.ylabel('Mantle CO$_2$ mass (kg)',fontsize=30)
+    plt.text(0.001,1.7e20,'(a)',fontsize=60,fontweight='bold')
+
     plt.subplot(2,1,2)
     plt.semilogx(tau,Freezing[:,4],'-',color='dimgray',lw=3)
     plt.semilogx(tau,Freezing[:,3],'--',color='darkgray',lw=3)
@@ -1159,4 +1265,5 @@ def compare_compaction(tau,redox):
     plt.semilogx(tau,Freezing[:,0],'o',mfc='steelblue',markersize=30)
     plt.xlabel(r'$\tau$ (Ma)',fontsize=30)
     plt.ylabel('Time to crystallization (Ma)', fontsize=30)
+    plt.text(0.001,0.7,'(b)',fontsize=60,fontweight='bold')
 

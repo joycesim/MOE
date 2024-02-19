@@ -23,15 +23,19 @@ class CO2:
 
     omega_CO2=44.0 #constant g/mole
     omegaM=36.0 #constant g/mol
-    K0=np.exp(-14.83)*1.0e-5 #constant 1/Pa
+    # K0=np.exp(-14.83)*1.0e-5 #constant 1/Pa
     T0=1200 #reference temperature degree C
-    dH = 5.2e3 #J enthalpy
+    # dH = 5.2e3 #J enthalpy
     R= 8.314 #Universal gas constant
     DCO2=0.001 # Partitioning coefficient
     #def calc_kco2(self,T):
     #    """Calculates the equilibrium constant
     #    of CO2 partitioning from Pan et al. 1991"""
     #    self.KCO2=self.K0*np.exp(-self.dH*(1.0/T -1.0/self.T0)/self.R)
+    
+    # Stanley et al 2012 
+    K0=np.exp(-15.22)*1.0e-5 #constant 1/Pa
+    dH = -25.33 #J enthalpy
             
 class H2O:
     """This class contains functions needed to 
@@ -217,20 +221,32 @@ class Mars(CO2,H2O,REE):
         self.T_CMB=self.freezing_front(self.core)
         #Set initial temperature
         self.T_init=self.T_CMB-(self.radius-self.core)*self.gam+200.0
+        
         #self.fit_coefficients=self.radius_temperature_analytical()
-        #a-T polynomial fit coefficients for 1820<T<2070 deg C
-        # self.aT_fit_hi=[ -1.46402889e+00,   2.96827884e+03,   1.79228532e+05] # forET solidus
+        #a-T polynomial fit coefficients for 1820<T<2070 deg 
         # self.aT_fit_hi=[ 5.32793176e-03, -8.57521927e+02,  2.23293172e+06] # for Duncan solidus
-        self.aT_fit_hi=[  1.74540136e+00, -8.08756790e+03,  9.33506009e+06] # for Duncan solidus and new core
+        # self.aT_fit_hi=[ -1.46402889e+00,   2.96827884e+03,   1.79228532e+05] # forET solidus
+
         #[ -1.19014770e+00,   2.03249128e+03,   1.09391926e+06]
         #a-T polynomial fit coefficient for 1350 < T <=1820 deg G
-        # self.aT_fit_lo= [ -1.52094133e-02,   6.59633338e+01,  \     
-                          # -9.63920910e+04,   4.93403358e+07]      # for ET solidus
+        # self.aT_fit_lo= [ -1.52094133e-02,   6.59633338e+01,  \
+                           # -9.63920910e+04,   4.93403358e+07]      # for ET solidus                           
         # self.aT_fit_lo= [ -8.48527711e-03,  3.95228013e+01, \
         #                  -6.22167091e+04,  3.47931221e+07 ]      # for Duncan solidus
-        self.aT_fit_lo= [ -4.98551119e-03,  2.15696248e+01, \
-                         -3.17239342e+04, 1.72448766e+07 ]      # for Duncan solidus and new core
+    # for Duncan solidus and new core
             #[ -1.52094133e-02,   6.82235562e+01,  -1.03039120e+05,  5.42788842e+07]
+            
+        ### Stanley et al carbon solubility, coupled Co2 and H2o in PA, Duncan solidus,  new core size. 
+        # self.aT_fit_hi=[  1.74540136e+00, -8.08756790e+03,  9.33506009e+06] # for Duncan solidus and new core
+        # self.aT_fit_lo= [ -4.98551119e-03,  2.15696248e+01, \
+        #                   -3.17239342e+04, 1.72448766e+07 ]  
+        ### Stanley et al carbon solubility, coupled Co2 and H2o in PA, ET08 solidus,  new core size.
+        #a-T polynomial fit coefficients for 2010<T<2200 deg 
+        self.aT_fit_hi=[1.74540136e+00, -8.08756790e+03,  9.33506009e+06] # forET solidus
+        #a-T polynomial fit coefficient for 1200 < T <=2010 deg G
+        self.aT_fit_lo= [-4.98551119e-03,  2.15696248e+01,  \
+                            -3.17239342e+04,  1.72448766e+07]      # for ET solidus 
+                           
         self.dadT=0.0                 #da/dT in m/K
         
         #######Volatile masses in terms of oceans
@@ -351,8 +367,19 @@ class Mars(CO2,H2O,REE):
         self.CREE_RM80 = np.zeros(23)
         self.CREE_MO80 = np.zeros(23)
         self.CREE_RM90 = np.zeros(23)
-        self.CREE_MO90 = np.zeros(23)     
-       
+        self.CREE_MO90 = np.zeros(23)  
+        
+        self.CREE_RM05 = np.zeros(23)
+        self.CREE_MO05 = np.zeros(23)
+        self.CREE_RM20 = np.zeros(23)
+        self.CREE_MO20 = np.zeros(23)  
+        self.CREE_RM60 = np.zeros(23)
+        self.CREE_MO60 = np.zeros(23)
+        self.CREE_RM98 = np.zeros(23)
+        self.CREE_MO98 = np.zeros(23)  
+        self.CREE_RM99 = np.zeros(23)
+        self.CREE_MO99 = np.zeros(23) 
+        
         ############################################################
         #Set the first value of temperature to initial temperature
         self.T[0]=self.T_init
@@ -543,11 +570,13 @@ class Mars(CO2,H2O,REE):
                 dum2 = 1982.1*(PGPa/6.594+1.0)**(1.0/5.374)-dT +diff
             else:
                 dum2=78.74*(PGPa/4.054e-3 + 1.0)**(1.0/2.44)-dT+ diff
+            # print("diff:",diff)
         else:
             n=r.shape[0]        
             dum2=np.zeros(n)
             # diff=np.zeros(n)
             diff = self.solidus(r)-self.ET08solidus(r)#-100
+            # print("diff:",diff)
             # np.seterr(all='print')
             for ii in range(0,n):
                 # if np.isnan(dT) == True or dT == 0 :
@@ -572,6 +601,13 @@ class Mars(CO2,H2O,REE):
         Tliq=self.liquidus(r)
         Tfront=Tsol+0.3*(Tliq-Tsol)
         return(Tfront)
+    def DeltaT_sol(self,r):
+        """Calculates the freezing front between the
+        solidus and the liquidus, enter radius in m"""
+        Tsol=self.solidus(r)
+        Tff=self.freezing_front(r)
+        DeltaT_sol=Tff-Tsol
+        return(DeltaT_sol)
     def ET08freezing_front(self,r):
         """Calculates the freezing front between the
         solidus and the liquidus, enter radius in m, 
@@ -951,6 +987,11 @@ class Mars(CO2,H2O,REE):
         vars8  = 'CREE'
         vars_temp1='80pct'
         vars_temp2='90pct'
+        vars_temp3='98pct'
+        vars_temp4='60pct'
+        vars_temp5='20pct'        
+        vars_temp6='5pct'
+        vars_temp7='5pctinc'
         #File extension
         ext    = '.csv'
         f1 = prefix+vars1+ext
@@ -963,16 +1004,21 @@ class Mars(CO2,H2O,REE):
         f8 = prefix+vars8+ext
         f9 = prefix+vars5+vars_temp1+ext
         f10= prefix+vars6+vars_temp2+ext
-        return(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10)
+        f11= prefix+vars6+vars_temp3+ext
+        f12= prefix+vars6+vars_temp4+ext
+        f13= prefix+vars6+vars_temp5+ext
+        f14= prefix+vars6+vars_temp6+ext
+        f15= prefix+vars8+vars_temp7+ext
+        return(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15)
     def create_output(self,const=False):
         """This function writes the output
         of simulations into text files"""
         if const == False:
             fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
-                fname9,fname10=self.output_filenames()
+                fname9,fname10,fname11,fname12,fname13,fname14,fname15=self.output_filenames()
         else:
             fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
-            fname9,fname10=self.output_filenames(const=True)
+            fname9,fname10,fname11,fname12,fname13,fname14,fname15=self.output_filenames(const=True)
             
         
         # Text for headers in the csv file
@@ -986,6 +1032,12 @@ class Mars(CO2,H2O,REE):
         txt8  = '#Final REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
         txt9  = '#80% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
         txt10= '#90% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
+        txt11= '#98% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
+        txt12= '#60% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
+        txt13= '#20% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
+        txt14= '#5% crystallization REE concentration in MO(first col) and RM(second col) in the order : Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
+        txt15= '#5% increment crystallization REE concentration in RM in the order : Rb Ba Th U Ta K La Ce P Sr Nd Sm Zr Hf Eu Gd Tb Dy Y Er Tm Yb Lu, 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%, 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%, 99.5%, MO 99.5%'
+
         
         temp1=np.array([self.tma,self.T,self.akm,self.heatflux,self.MMO,\
                         self.MRM,self.Ftl])
@@ -1029,14 +1081,59 @@ class Mars(CO2,H2O,REE):
         temp10[:,1]=self.CREE_RM90
         np.savetxt(fname10,temp10,delimiter=",",header=txt10)
 
+        temp11=np.zeros((23,2))
+        temp11[:,0]=self.CREE_MO98
+        temp11[:,1]=self.CREE_RM98
+        np.savetxt(fname11,temp11,delimiter=",",header=txt11)
+        
+        temp12=np.zeros((23,2))
+        temp12[:,0]=self.CREE_MO60
+        temp12[:,1]=self.CREE_RM60
+        np.savetxt(fname12,temp12,delimiter=",",header=txt12)
+
+        temp13=np.zeros((23,2))
+        temp13[:,0]=self.CREE_MO20
+        temp13[:,1]=self.CREE_RM20
+        np.savetxt(fname13,temp13,delimiter=",",header=txt13)
+
+        temp14=np.zeros((23,2))
+        temp14[:,0]=self.CREE_MO05
+        temp14[:,1]=self.CREE_RM05
+        np.savetxt(fname14,temp14,delimiter=",",header=txt14)
+
+        temp15=np.zeros((23,21))
+        # temp15[:,0]=self.CREE_RM05
+        # temp15[:,1]=self.CREE_RM10
+        # temp15[:,2]=self.CREE_RM15
+        # temp15[:,3]=self.CREE_RM20
+        # temp15[:,4]=self.CREE_RM25
+        # temp15[:,5]=self.CREE_RM30
+        # temp15[:,6]=self.CREE_RM35
+        # temp15[:,7]=self.CREE_RM40
+        # temp15[:,8]=self.CREE_RM45
+        # temp15[:,9]=self.CREE_RM50
+        # temp15[:,10]=self.CREE_RM55
+        # temp15[:,11]=self.CREE_RM60
+        # temp15[:,12]=self.CREE_RM65
+        # temp15[:,13]=self.CREE_RM70
+        # temp15[:,14]=self.CREE_RM75
+        temp15[:,15]=self.CREE_RM80        
+        # temp15[:,16]=self.CREE_RM85
+        temp15[:,17]=self.CREE_RM90
+        # temp15[:,18]=self.CREE_RM95
+        temp15[:,19]=self.CREE_RM99 
+        temp15[:,20]=self.CREE_MO99 
+        np.savetxt(fname15,temp15,delimiter=",",header=txt15)
+
+        
     def write_all_REE(self,const=False):
         """Writes REE concentrations for all time steps"""
         if const == False:
             fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
-                fname9,fname10=self.output_filenames()
+                fname9,fname10,fname11,fname12,fname13,fname14,fname15=self.output_filenames()
         else:
             fname1,fname2,fname3,fname4,fname5,fname6,fname7,fname8,\
-                fname9,fname10=self.output_filenames(const=True)
+                fname9,fname10,fname11,fname12,fname13,fname14,fname15=self.output_filenames(const=True)
     
         txt5  = '# Evolution of  REE concentration in RM in the order :\
         Rb,Ba,Th,U,Ta,K,La,Ce,P,Sr,Nd,Sm,Zr,Hf,Eu,Gd,Tb,Dy,Y,Er,Tm,Yb,Lu'
@@ -1133,7 +1230,10 @@ class Mars(CO2,H2O,REE):
             self.dadT[ii]=self.dadT_analytical(self.T[ii])
             # Calculate the heat flux
             self.heatflux[ii]=self.heat_flux(self.T[ii],e)
+            
             #calculate trapped melt fraction
+            # self.deltaT = self.DeltaT_sol(self.a[ii])
+            
             if const_Ftl == False:
                 # print(type(self.Ftl), type(dTdt))
                 #self.Ftl[ii]=self.phic*self.tau*dTdt[ii]/self.deltaT
@@ -1141,6 +1241,8 @@ class Mars(CO2,H2O,REE):
                 self.Ftl[ii]=-self.phic*self.tau*self.dTdt[ii]/self.deltaT
             else:
                 self.Ftl[ii]=0.01              
+            
+            # print('trapped melt,', self.Ftl[ii])
             
             if self.Ftl[ii]>=0.3:
                 self.Ftl[ii]=0.3
@@ -1265,30 +1367,96 @@ class Mars(CO2,H2O,REE):
             ######################################################
             # check if solidified, then exit
             #####################################################
-            percent_solid=100.0*self.a[ii]/(self.radius-self.core)
+            # percent_solid=100.0*self.a[ii]/(self.radius-self.core)
+            percent_solid=100.0*self.MRM[ii]/(self.MRM[ii]+self.MMO[ii])
             #print '% MO solidified: ', percent_solid            
             # Create a special object for creating output
             # of REEs at 80% and 90% crystallization
-            if percent_solid >80.0 and percent_solid<81.0:
+            # if percent_solid >5.0 and percent_solid<5.1:
+            #     self.CREE_RM05=self.CREERM[:,ii]
+            #     self.CREE_MO05=self.CREEMO[:,ii]
+            #     print('Percent crystallized 5%', percent_solid)
+            # if percent_solid >10.0 and percent_solid<10.1:
+            #     self.CREE_RM10=self.CREERM[:,ii]
+            #     print('Percent crystallized 10%', percent_solid)
+            # if percent_solid >15.0 and percent_solid<15.1:
+            #     self.CREE_RM15=self.CREERM[:,ii]           
+            #     print('Percent crystallized 15%', percent_solid)
+            # if percent_solid >20.0 and percent_solid<20.1:
+            #     self.CREE_RM20=self.CREERM[:,ii]
+            #     self.CREE_MO20=self.CREEMO[:,ii]
+            #     print('Percent crystallized 20%', percent_solid)
+            # if percent_solid >25.0 and percent_solid<25.1:
+            #     self.CREE_RM25=self.CREERM[:,ii] 
+            #     print('Percent crystallized 25%', percent_solid)
+            # if percent_solid >30.0 and percent_solid<30.1:
+            #     self.CREE_RM30=self.CREERM[:,ii] 
+            #     print('Percent crystallized 30%', percent_solid)
+            # if percent_solid >35.0 and percent_solid<35.1:
+            #     self.CREE_RM35=self.CREERM[:,ii] 
+            #     print('Percent crystallized 35%', percent_solid)
+            # if percent_solid >40.0 and percent_solid<40.1:
+            #     self.CREE_RM40=self.CREERM[:,ii] 
+            #     print('Percent crystallized 40%', percent_solid)
+            # if percent_solid >45.0 and percent_solid<45.1:
+            #     self.CREE_RM45=self.CREERM[:,ii] 
+            #     print('Percent crystallized 45%', percent_solid)
+            # if percent_solid >50.0 and percent_solid<50.1:
+            #     self.CREE_RM50=self.CREERM[:,ii]                 
+            #     print('Percent crystallized 50%', percent_solid)
+            # if percent_solid >55.0 and percent_solid<55.1:
+            #     self.CREE_RM55=self.CREERM[:,ii] 
+            #     print('Percent crystallized 55%', percent_solid)
+            # if percent_solid >60.0 and percent_solid<60.1:
+            #     self.CREE_RM60=self.CREERM[:,ii]
+            #     self.CREE_MO60=self.CREEMO[:,ii]
+            #     print('Percent crystallized 60%', percent_solid)
+            # if percent_solid >65.0 and percent_solid<65.1:
+            #     self.CREE_RM65=self.CREERM[:,ii] 
+            #     print('Percent crystallized 65%', percent_solid)
+            # if percent_solid >70.0 and percent_solid<70.1:
+            #     self.CREE_RM70=self.CREERM[:,ii]      
+            #     print('Percent crystallized 70%', percent_solid)
+            # if percent_solid >75.0 and percent_solid<75.1:
+            #     self.CREE_RM75=self.CREERM[:,ii]              
+            #     print('Percent crystallized 75%', percent_solid)
+            if percent_solid >80.0 and percent_solid<80.1:
                 self.CREE_RM80=self.CREERM[:,ii]
                 self.CREE_MO80=self.CREEMO[:,ii]
+                # print('Percent crystallized 80%', percent_solid)
                 # print( '80% shape and values')
             #    print np.shape(self.CREE_RM80)
             #    print self.CREE_RM80
             #Only uncomment the following for special cases    
-            if percent_solid>90.0 and percent_solid<91.0:
+            # if percent_solid >85.0 and percent_solid<85.1:
+            #     self.CREE_RM85=self.CREERM[:,ii]    
+            #     print('Percent crystallized 85%', percent_solid)
+            if percent_solid>90.0 and percent_solid<90.1:
                 self.CREE_RM90 =self.CREERM[:,ii]
                 self.CREE_MO90=self.CREEMO[:,ii]
+                # print('Percent crystallized 90%', percent_solid)
                 # print( '90% shape and values')
             #    print np.shape(self.CREE_RM90)
             #    print self.CREE_RM90
+            # if percent_solid >95.0 and percent_solid<95.1:
+            #     self.CREE_RM95=self.CREERM[:,ii]    
+            #     print('Percent crystallized 95%', percent_solid)
+            if percent_solid>98.0 and percent_solid<98.1:
+                self.CREE_RM98 =self.CREERM[:,ii]
+                self.CREE_MO98=self.CREEMO[:,ii]      
+                # print('Percent crystallized 98%', percent_solid)
             if percent_solid > 99.5:
+                self.CREE_RM99 =self.CREERM[:,ii]
+                self.CREE_MO99=self.CREEMO[:,ii]                
+                print('Percent crystallized 99.5%', percent_solid)
                 # variables for print out
                 temp1=self.CH2ORM[ii]*1.0e6
                 temp2=self.CCO2RM[ii]*1.0e6
                 temp3= self.PCO2[ii]*1.0e-5
                 temp4= self.PH2O[ii]*1.0e-5
                 temp5=self.t[ii]*1.0e-6/365/24/3600
+                temp6=100.0*self.MH2ORM[ii]/(self.MH2OMO[ii]+ self.MH2OPA[ii] +  self.MH2ORM[ii])
+                temp7=100.0*self.MCO2RM[ii]/(self.MCO2MO[ii]+ self.MCO2PA[ii] +  self.MCO2RM[ii])
                 break
         
         
@@ -1315,6 +1483,8 @@ class Mars(CO2,H2O,REE):
         print( 'Pressure of CO2 in atmosphere (bars):', temp3)
         print( 'Pressure of H2O in atmosphere (bars):', temp4)
         print( 'Time to crystallization (Ma):', temp5)
+        print( 'Percent mass of H2O in RM:', temp6)
+        print( 'Percent mass of CO2 in RM:', temp7)
         print( '###########################################')
         return(ii-1)
  ###################################################
@@ -1341,6 +1511,116 @@ class Mars(CO2,H2O,REE):
         #plt.plot(r*0.0,akm,'-r')
         plt.xlabel(r'Residual from $T_{ad}-T_{sol}$')
         plt.ylabel('Planetary radius (km)')
+    # def radius_temperature_analytical(self,plot=False):
+    #     """Calculates the radius as a function of temperature
+    #     and gives a polynomial fit"""
+        
+    #     T=np.linspace(self.T_surf,self.T_init,100)
+    #     a=0.0*T
+        
+    #     index=np.zeros(100)
+    #     for ii in range (0,99):
+    #         a[ii]=self.solid_radius(T[ii])
+            
+    #     for ii in range (0,99):
+    #         # Fit the radius only for nonzero values
+    #         if T[ii]>1350.0 and T[ii] < 1820.0:
+    #             index[ii]=True
+    #         else:
+    #             index[ii]=False
+    
+    #     TT=np.extract(index,T)
+    #     aa=np.extract(index,a)
+    #     p_low=np.polyfit(TT,aa,3)
+    
+    #     index=np.zeros(100)
+    #     for ii in range (0,99):
+    #         # Fit the radius only for nonzero values
+    #         if T[ii]>1820.0 and T[ii] < 2080.0:
+    #             index[ii]=True
+    #         else:
+    #             index[ii]=False
+    
+    #     TT1=np.extract(index,T)
+    #     aa1=np.extract(index,a)
+    #     p_high=np.polyfit(TT1,aa1,2)
+        
+        
+    #     if plot==True:
+    #         temp_label=[1400,1800,2200,2600]
+    #         plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
+    #         T_high=np.linspace(1821.0,2080.0)
+    #         T_low=np.linspace(1350.0,1819.0)
+
+    #         a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
+    #         a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
+    #         plt.plot(T_high,a_high/1.0e3,'-',color='steelblue',lw=4)
+    #         plt.legend(['Numerical','Fit'],fancybox=True,framealpha=0.7,loc=3)
+    #         plt.plot(2050,146.0,'o',color='tomato',markersize=20,alpha=0.7)
+    #         plt.plot(1550,1776.0,'o',color='tomato',markersize=20,alpha=0.7)
+    #         plt.plot(T_low,a_low/1.0e3,'-',color='steelblue',lw=4)
+    #         plt.xticks(temp_label)
+    #         plt.ylim(0.0,2000.0)
+    #         plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
+    #         plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
+    #         print( 'Coefficients between 1820 and 2080',p_high)
+    #         print( 'Coefficients between 1350 and 1820',p_low)
+    
+    def smallerCore_radius_temperature_analytical(self,plot=False):
+        """Calculates the radius as a function of temperature
+        and gives a polynomial fit"""
+        
+        T=np.linspace(self.T_surf,self.T_init,100)
+        a=0.0*T
+        
+        index=np.zeros(100)
+        for ii in range (0,99):
+            a[ii]=self.solid_radius(T[ii])
+            
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>1200.0 and T[ii] < 2010.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT=np.extract(index,T)
+        aa=np.extract(index,a)
+        p_low=np.polyfit(TT,aa,3)
+    
+        index=np.zeros(100)
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>2010.0 and T[ii] < 2650.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT1=np.extract(index,T)
+        aa1=np.extract(index,a)
+        p_high=np.polyfit(TT1,aa1,2)
+        
+        
+        if plot==True:
+            temp_label=[1400,1800,2200,2600]
+            plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
+            T_high=np.linspace(2010.0,2650.0)
+            T_low=np.linspace(1200.0,2010.0)
+
+            a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
+            a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
+            plt.plot(T_high,a_high/1.0e3,'-',color='steelblue',lw=4)
+            plt.legend(['Numerical','Fit'],fancybox=True,framealpha=0.7,loc=3)
+            plt.plot(2050,146.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(1550,1776.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(T_low,a_low/1.0e3,'-',color='steelblue',lw=4)
+            plt.xticks(temp_label)
+            plt.ylim(0.0,2000.0)
+            plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
+            plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
+            print( 'Coefficients between 1820 and 2080',p_high)
+            print( 'Coefficients between 1350 and 1820',p_low)
+            
     def radius_temperature_analytical(self,plot=False):
         """Calculates the radius as a function of temperature
         and gives a polynomial fit"""
@@ -1354,7 +1634,7 @@ class Mars(CO2,H2O,REE):
             
         for ii in range (0,99):
             # Fit the radius only for nonzero values
-            if T[ii]>1350.0 and T[ii] < 1820.0:
+            if T[ii]>1200.0 and T[ii] < 2010.0:
                 index[ii]=True
             else:
                 index[ii]=False
@@ -1366,7 +1646,7 @@ class Mars(CO2,H2O,REE):
         index=np.zeros(100)
         for ii in range (0,99):
             # Fit the radius only for nonzero values
-            if T[ii]>1820.0 and T[ii] < 2080.0:
+            if T[ii]>2010.0 and T[ii] < 2150.0:
                 index[ii]=True
             else:
                 index[ii]=False
@@ -1379,8 +1659,8 @@ class Mars(CO2,H2O,REE):
         if plot==True:
             temp_label=[1400,1800,2200,2600]
             plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
-            T_high=np.linspace(1821.0,2080.0)
-            T_low=np.linspace(1350.0,1819.0)
+            T_high=np.linspace(2010.0,2150.0)
+            T_low=np.linspace(1200.0,2010.0)
 
             a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
             a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
@@ -1507,6 +1787,62 @@ class Mars(CO2,H2O,REE):
             plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
             print( 'Coefficients between 2010 and 2200',p_high)
             print( 'Coefficients between 1200 and 2010',p_low)
+       
+    def Stanley_radius_temperature_analytical(self,plot=False):
+        """Calculates the radius as a function of temperature
+        and gives a polynomial fit"""
+        
+        T=np.linspace(self.T_surf,self.T_init,100)
+        a=0.0*T
+        
+        index=np.zeros(100)
+        for ii in range (0,99):
+            a[ii]=self.solid_radius(T[ii])
+            
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>1200.0 and T[ii] < 2010.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT=np.extract(index,T)
+        aa=np.extract(index,a)
+        p_low=np.polyfit(TT,aa,3)
+    
+        index=np.zeros(100)
+        for ii in range (0,99):
+            # Fit the radius only for nonzero values
+            if T[ii]>2010.0 and T[ii] < 2200.0:
+                index[ii]=True
+            else:
+                index[ii]=False
+    
+        TT1=np.extract(index,T)
+        aa1=np.extract(index,a)
+        p_high=np.polyfit(TT1,aa1,2)
+        
+        
+        if plot==True:
+            temp_label=[1200,1600,2000,2400,2800]
+            plt.plot(T,a*1.0e-3,'s',color='skyblue',markersize=20,alpha=0.7)
+            T_high=np.linspace(2010.0,2200.0)
+            T_low=np.linspace(1200.0,2010.0)
+
+            a_high=p_high[0]*T_high**2+p_high[1]*T_high+p_high[2]
+            a_low=p_low[0]*T_low**3+p_low[1]*T_low**2+p_low[2]*T_low+p_low[3]
+            plt.plot(T_high,a_high/1.0e3,'-',color='steelblue',lw=4)
+            plt.legend(['Numerical','Fit'],fancybox=True,framealpha=0.7,loc=3)
+            plt.plot(2055,90.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(1575,1310.0,'o',color='tomato',markersize=20,alpha=0.7)
+            plt.plot(T_low,a_low/1.0e3,'-',color='steelblue',lw=4)
+            plt.xticks(temp_label)
+            plt.ylim(0.0,2000.0)
+            plt.xlim(1200.0,2800.0)
+            plt.xlabel(r'Potential Temperature ($^\mathrm{o}$C)',fontsize=30)
+            plt.ylabel(r'Residual mantle radius (km)',fontsize=30)
+            print( 'Coefficients between 2010 and 2200',p_high)
+            print( 'Coefficients between 1200 and 2010',p_low)
             
 class Mars_read(REE):
     """
@@ -1545,6 +1881,39 @@ class Mars_read(REE):
             data4=np.loadtxt(f[9],delimiter=',')
             self.CREEMO_90=data4[:,0]
             self.CREERM_90=data4[:,1]
+            data5=np.loadtxt(f[10],delimiter=',')
+            self.CREEMO_98 = data5[:,0]
+            self.CREERM_98 = data5[:,1]
+            data6=np.loadtxt(f[11],delimiter=',')
+            self.CREEMO_60 = data6[:,0]
+            self.CREERM_60 = data6[:,1] 
+            data7=np.loadtxt(f[12],delimiter=',')
+            self.CREEMO_20 = data7[:,0]
+            self.CREERM_20 = data7[:,1]
+            data8=np.loadtxt(f[13],delimiter=',')
+            self.CREEMO_05 = data8[:,0]
+            self.CREERM_05 = data8[:,1] 
+            data9=np.loadtxt(f[14],delimiter=',')
+            self.CREERM_05 = data9[:,0]
+            self.CREERM_10 = data9[:,1]             
+            self.CREERM_15 = data9[:,2]
+            self.CREERM_20 = data9[:,3] 
+            self.CREERM_25 = data9[:,4]
+            self.CREERM_30 = data9[:,5] 
+            self.CREERM_35 = data9[:,6]
+            self.CREERM_40 = data9[:,7] 
+            self.CREERM_45 = data9[:,8]
+            self.CREERM_50 = data9[:,9] 
+            self.CREERM_55 = data9[:,10]
+            self.CREERM_60 = data9[:,11] 
+            self.CREERM_65 = data9[:,12]
+            self.CREERM_70 = data9[:,13] 
+            self.CREERM_75 = data9[:,14]
+            self.CREERM_80 = data9[:,15] 
+            self.CREERM_85 = data9[:,16]
+            self.CREERM_90 = data9[:,17] 
+            self.CREERM_95 = data9[:,18]
+            self.CREERM_99 = data9[:,19]             
         ###############################################
         # Initial Martian crust and mantle abundance
         # From Lodder and Fegley, 1997, Table VI
@@ -1603,6 +1972,11 @@ class Mars_read(REE):
         vars8  = 'CREE'
         vars_temp1='80pct'
         vars_temp2='90pct'
+        vars_temp3='98pct'
+        vars_temp4='60pct'
+        vars_temp5='20pct'        
+        vars_temp6='5pct'
+        vars_temp7='5pctinc'
         #File extension
         ext    = '.csv'
         f1 = prefix+vars1+ext
@@ -1615,8 +1989,12 @@ class Mars_read(REE):
         f8 = prefix+vars8+ext
         f9 = prefix+vars5+vars_temp1+ext
         f10= prefix+vars6+vars_temp2+ext
-        
-        return(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10)
+        f11= prefix+vars6+vars_temp3+ext
+        f12= prefix+vars6+vars_temp4+ext
+        f13= prefix+vars6+vars_temp5+ext
+        f14= prefix+vars6+vars_temp6+ext
+        f15= prefix+vars8+vars_temp7+ext
+        return(f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15)
     
     def load_evolution(self,Ftl_const=False):
         """Loads data from files"""
@@ -1650,7 +2028,7 @@ class Mars_read(REE):
         """
         self.load_evolution()
         plt.figure(figsize=(12,10))
-        ax1=plt.subplot(3,1,1)
+        ax1=plt.subplot(4,1,1)
         plt.plot(self.tma,self.T,'firebrick',linewidth=4)
         plt.ylabel(r'$T (^\mathrm{o}$C)',fontsize=30)
         
@@ -1661,7 +2039,7 @@ class Mars_read(REE):
         plt.text(0.03,1500,'(a)',fontsize=40,fontweight='bold')
         ax1.set_yticks([1600,2000,2400])
         # plt.xlim(0.0,1.5)
-        ax1=plt.subplot(3,1,2)
+        ax1=plt.subplot(4,1,2)
         plt.plot(self.tma,self.MMO/1.0e23,'salmon',linewidth=4)
         plt.plot(self.tma,self.MRM/1.0e23,'steelblue',linewidth=4)
         plt.legend(['MO','RM'],fancybox=True,loc=4,framealpha=0.5)
@@ -1672,16 +2050,17 @@ class Mars_read(REE):
         plt.ylabel(r'Mass ($10^{23}$ kg)',fontsize=30,labelpad=20)
         ax1.set_yticks([2.0,4.0,6.0])
         # plt.xlim(0.0,1.5)
-        #ax1=plt.subplot(4,1,3)
-        #plt.plot(self.tma,self.Ftl,'forestgreen',linewidth=4)
-        #plt.ylabel(r'$F_tl$',fontsize=30)
-        ax1=plt.subplot(3,1,3)
+        ax1=plt.subplot(4,1,3)
         plt.plot(self.tma,self.akm,'forestgreen',linewidth=4)
         plt.ylabel('RM radius (km)',fontsize=30)
         plt.xlabel('Time (Ma)',fontsize=30)
         plt.text(0.03,300,'(c)',fontsize=40,fontweight='bold')
         ax1.set_yticks([500,1000,1500])
         # plt.xlim(0.0,1.5)
+        ax1=plt.subplot(4,1,4)
+        plt.plot(self.tma,self.Ftl,'forestgreen',linewidth=4)
+        plt.ylabel(r'$F_tl$',fontsize=30)
+        plt.ylim(0.25,0.35)
     def kg2GELm(self,M,rho_fluid=1.0e3):
         """
         This function converts mass of water in kg to
