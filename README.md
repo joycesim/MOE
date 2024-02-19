@@ -5,6 +5,6 @@ Accompanying manuscript: "Volatile and Trace Element Storage in a Crystallizing 
 
 Start with Simulations.py and make sure to have a data folder when running it as this will be where all the model outputs get saved. 
 
-If you do not want to run the simulations, there is a zip file, data.zip, that you can unzip and use that to generate the plots in the manuscript.
+If you do not want to run the simulations, please request for the zipped data file as it is too large to store on here. You can unzip and use that to generate the plots in the manuscript.
 
 After all the data files are generated, run shhm_plots.py script to generate all the plots for the manuscript.
