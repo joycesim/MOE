@@ -8,3 +8,5 @@ Start with Simulations.py and make sure to have a data folder when running it as
 If you do not want to run the simulations, please request for the zipped data file as it is too large to store on here. You can unzip and use that to generate the plots in the manuscript.
 
 After all the data files are generated, run shhm_plots.py script to generate all the plots for the manuscript.
+
+https://zenodo.org/doi/10.5281/zenodo.11250588
