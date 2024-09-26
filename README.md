@@ -1,7 +1,9 @@
 # MOE (Magma Ocean Evolution)
 A python library for modeling thermal evolution of magma oceans in terrestrial planets.
 
-Accompanying manuscript: "Volatile and Trace Element Storage in a Crystallizing Martian Magma Ocean", S. J. Sim, M. M. Hirschmann and S. Hier-Majumder 
+Citation: Saswata Hier-Majumder, & Joyce Sim. (2024). joycesim/MOE: Publication (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.11250589
+
+Accompanying manuscript: S.J.Sim, M.Hirschmann, S.Hier-Majumder (2024) Volatile and Trace Element Storage in a Crystallizing Martian Magma Ocean, *Journal of Geophysical Research: Planets*, [http://dx.doi.org/10.1029/2024JE008346](http://dx.doi.org/10.1029/2024JE008346).
 
 Start with Simulations.py and make sure to have a data folder when running it as this will be where all the model outputs get saved. 
 
